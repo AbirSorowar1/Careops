@@ -32,7 +32,7 @@ import {
   summariseMoney,
 } from "@/lib/data/metrics";
 import { buildInsights } from "@/lib/data/insights";
-import { formatCompactMoney, formatMoney, formatNumber, formatPercent, formatTime } from "@/lib/data/format";
+import { formatCompactMoney, formatNumber, formatTime } from "@/lib/data/format";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -109,30 +109,27 @@ function Overview() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <KpiCard label="Total clients" value={formatNumber(clients.length)} icon={Users} hint={`Rows in the “${ds.mappings.find((x) => x.role === "clients")?.sheet ?? "—"}” tab`} />
-        <KpiCard label="Total caregivers" value={formatNumber(caregivers.length)} icon={HeartHandshake} tone="teal" hint={`Rows in the “${ds.mappings.find((x) => x.role === "caregivers")?.sheet ?? "—"}” tab`} />
+        <KpiCard label="Total clients" value={formatNumber(clients.length)} icon={Users} />
+        <KpiCard label="Total caregivers" value={formatNumber(caregivers.length)} icon={HeartHandshake} tone="teal" />
         <KpiCard
           label="Complete client records"
           value={<>{formatNumber(clientComplete)}<span className="ml-1 text-base font-medium text-muted-foreground">/ {clients.length}</span></>}
           icon={ClipboardCheck}
           tone="success"
-          hint={clients.length ? `${formatPercent(clientComplete / clients.length)} have every mapped field filled` : undefined}
         />
         <KpiCard
           label="Complete caregiver records"
           value={<>{formatNumber(cgComplete)}<span className="ml-1 text-base font-medium text-muted-foreground">/ {caregivers.length}</span></>}
           icon={UserCheck}
           tone={cgComplete === caregivers.length ? "success" : "warning"}
-          hint={caregivers.length ? `${formatPercent(cgComplete / caregivers.length)} have age, address, education, experience and a valid mobile` : undefined}
         />
-        <KpiCard label="Service types" value={m.types.length} icon={Stethoscope} tone="navy" hint={m.types.slice(0, 3).map((t) => t.label).join(", ")} />
-        <KpiCard label="Service areas" value={m.areas.length} icon={MapPin} tone="navy" hint="Distinct areas after spelling and spacing clean-up" />
+        <KpiCard label="Service types" value={m.types.length} icon={Stethoscope} tone="navy" />
+        <KpiCard label="Service areas" value={m.areas.length} icon={MapPin} tone="navy" />
         {hasClientPay && (
           <KpiCard
             label="Recorded client payments"
             value={formatCompactMoney(m.cp.total, cur)}
             icon={Wallet}
-            hint={`${formatMoney(m.cp.total, cur)} across ${m.cp.recordedCount} records${m.cp.missingCount ? ` · ${m.cp.missingCount} blank` : ""}`}
           />
         )}
         {hasCgPay && (
@@ -141,7 +138,6 @@ function Overview() {
             value={formatCompactMoney(m.gp.total, cur)}
             icon={HandCoins}
             tone="teal"
-            hint={`${formatMoney(m.gp.total, cur)} from ${m.gp.amountCount} amounts (merged cells counted once)`}
           />
         )}
         <KpiCard
@@ -149,7 +145,6 @@ function Overview() {
           value={formatNumber(m.recordsWithIssues)}
           icon={AlertTriangle}
           tone={m.recordsWithIssues ? "warning" : "success"}
-          hint="Clients and caregivers combined"
           footer={
             <Link to="/data-quality" className="no-print inline-flex items-center gap-1 text-xs font-medium text-brand hover:underline">
               Review records <ArrowRight className="size-3" />
