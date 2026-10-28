@@ -62,6 +62,7 @@ function FinancialPage() {
   );
   const cp = useMemo(() => summariseMoney(rows, (c) => c.clientPay), [rows]);
   const gp = useMemo(() => summariseMoney(rows, (c) => c.caregiverPay), [rows]);
+  const monthlyProfit = cp.total - gp.total;
   const breakdown = useMemo(() => {
     const pick =
       dim === "type" ? (c: ClientRecord) => c.serviceType.group : dim === "area" ? (c: ClientRecord) => c.area.group : (c: ClientRecord) => c.category.group;
@@ -102,7 +103,7 @@ function FinancialPage() {
         [
           `Financial summary — ${ds.title}`,
           `Generated ${formatDateTime(new Date().toISOString())}; data last synced ${formatDateTime(lastSuccessAt)}`,
-          `Amounts in ${cur}. Recorded amounts only; blanks are not counted as zero. Not a profit statement.`,
+          `Amounts in ${cur}. Recorded amounts only; blanks are not counted as zero. Monthly Profit is client pay minus caregiver payments; confirm both totals cover the same month.`,
           `Totals: client pay ${cp.total}; caregiver payments ${gp.total} (merged amounts counted once)`,
         ],
       ),
@@ -112,7 +113,7 @@ function FinancialPage() {
     <>
       <PageHeader
         title="Financial Overview"
-        description={`Recorded payment amounts in ${cur}. The sheet does not state the period these amounts cover, so totals are sums of recorded values — not revenue or profit.`}
+        description={`Recorded payment amounts in ${cur}. Monthly Profit is calculated as total recorded client payments minus total recorded caregiver payments. Confirm both totals cover the same month.`}
         actions={
           <Button variant="subtle" size="sm" onClick={exportCsv}>
             <Download /> Export summary (CSV)
@@ -177,8 +178,8 @@ function FinancialPage() {
             onSelect={(label) => set(dim === "type" ? { type: label } : dim === "area" ? { area: label } : { category: label })}
           />
         </Panel>
-        <Panel title="Recorded difference" description="Client pay minus caregiver payments">
-          <p className="font-display text-3xl font-bold tabular">{formatMoney(cp.total - gp.total, cur)}</p>
+        <Panel title="Monthly Profit" description="Total recorded client payments minus total recorded caregiver payments">
+          <p className="font-display text-3xl font-bold tabular">{formatMoney(monthlyProfit, cur)}</p>
           <p className="mt-1 text-xs text-muted-foreground">
             {formatMoney(cp.total, cur)} − {formatMoney(gp.total, cur)}
           </p>
@@ -187,7 +188,7 @@ function FinancialPage() {
               <span className="font-medium text-foreground">How it’s calculated:</span> the sum of every recorded client pay value minus the sum of every recorded caregiver payment (each merged amount counted once).
             </p>
             <p>
-              <span className="font-medium text-foreground">Limitations:</span> the sheet doesn’t say which period (day, month, contract) each amount covers, and client pay and caregiver payments may not refer to the same period. This is <span className="font-medium text-foreground">not a profit figure</span>.
+              <span className="font-medium text-foreground">Important:</span> this is a monthly profit figure only if both payment totals cover the same month. The sheet doesn’t identify the period each amount covers, so verify the source data before treating it as monthly profit.
             </p>
             <p>{fullCoverage ? "Both payment fields are filled for every filtered record." : `Coverage differs: ${cp.missingCount + cp.invalidCount} client pay and ${gp.missingCount + gp.invalidCount} caregiver payment values are missing or invalid.`}</p>
           </div>

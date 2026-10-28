@@ -49,11 +49,40 @@ function isErrorLike(value: unknown): value is Error {
   return value instanceof Error;
 }
 
+/** Detects client disconnects from Node's incoming-request stream. */
+export function isRequestAbortedError(error: unknown): boolean {
+  let current = error;
+  for (let depth = 0; depth < CAUSE_DEPTH_LIMIT && current != null; depth++) {
+    if (typeof current !== "object") return false;
+    const candidate = current as {
+      cause?: unknown;
+      code?: unknown;
+      message?: unknown;
+      name?: unknown;
+      stack?: unknown;
+    };
+    if (
+      candidate.message === "aborted" &&
+      typeof candidate.stack === "string" &&
+      candidate.stack.includes("abortIncoming")
+    ) {
+      return true;
+    }
+    current = candidate.cause;
+  }
+  return false;
+}
+
 // Wrap console.error so errors logged by any layer — including h3's internal
 // unhandled-error logging, which this file cannot hook directly — are both
 // recorded for consumeLastCapturedError and expanded before serialization.
 const originalConsoleError = console.error.bind(console);
 console.error = (...args: unknown[]) => {
+  const errors = args.filter(isErrorLike);
+  if (errors.length > 0 && errors.every(isRequestAbortedError)) {
+    errors.forEach(record);
+    return;
+  }
   const expanded = args.map((arg) => {
     if (!isErrorLike(arg)) return arg;
     record(arg);
